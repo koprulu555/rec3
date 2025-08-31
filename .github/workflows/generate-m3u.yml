@@ -26,7 +26,7 @@ jobs:
       run: |
         pip install requests firebase-admin
 
-    - name: Download and parse RecTV.kt
+    - name: Parse local RecTV.kta file
       run: |
         cd scripts
         python parse-rec-tv.py
@@ -43,13 +43,12 @@ jobs:
 
     - name: Generate M3U playlist
       run: |
-        cd scripts
-        php generate-m3u.php
+        php scripts/generate-m3u.php
 
     - name: Commit and push M3U
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add m3u-output/rectv-playlist.m3u
+        git add rectv-playlist.m3u
         git commit -m "Auto-update M3U $(date +'%Y-%m-%d %H:%M')" || echo "No changes"
         git push
