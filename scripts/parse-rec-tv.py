@@ -3,21 +3,17 @@ import re
 import json
 import os
 
-def download_rec_tv_kt():
-    """RecTV.kt dosyasını indir ve analiz et"""
-    url = "https://raw.githubusercontent.com/nikyokki/nik-cloudstream/b46ee3286c3232ac1b40715e5db49bf090350586/RecTV/src/main/kotlin/com/keyiflerolsun/RecTV.kt"
-    
+def parse_local_rec_tv():
+    """Local RecTV.kta dosyasını parse et"""
     try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
+        with open('scripts/RecTV.kta', 'r', encoding='utf-8') as f:
+            content = f.read()
         
-        content = response.text
-        print("✓ RecTV.kt başarıyla indirildi")
+        print("✓ Local RecTV.kta dosyası okundu")
         
         # Firebase configini parse et
         firebase_config = {}
         
-        # API anahtarlarını bul
         patterns = {
             'apiKey': r'apiKey\s*=\s*"([^"]+)"',
             'authDomain': r'authDomain\s*=\s*"([^"]+)"',
@@ -34,28 +30,37 @@ def download_rec_tv_kt():
                 print(f"✓ {key}: {match.group(1)}")
         
         # API endpoint'lerini bul
-        api_patterns = {
-            'mainUrl': r'override\s+var\s+mainUrl\s*=\s*"([^"]+)"',
-            'swKey': r'private\s+(val|var)\s+swKey\s*=\s*"([^"]+)"',
-            'userAgent': r'"user-agent"\s*to\s*"([^"]+)"',
-            'referer': r'"Referer"\s*to\s*"([^"]+)"'
-        }
-        
         api_config = {}
-        for key, pattern in api_patterns.items():
-            match = re.search(pattern, content)
-            if match:
-                if key == 'swKey':
-                    api_config[key] = match.group(2)
-                else:
-                    api_config[key] = match.group(1)
-                print(f"✓ {key}: {api_config[key]}")
+        
+        # mainUrl
+        main_url_match = re.search(r'override\s+var\s+mainUrl\s*=\s*"([^"]+)"', content)
+        if main_url_match:
+            api_config['mainUrl'] = main_url_match.group(1)
+            print(f"✓ mainUrl: {api_config['mainUrl']}")
+        
+        # swKey
+        sw_key_match = re.search(r'private\s+(val|var)\s+swKey\s*=\s*"([^"]+)"', content)
+        if sw_key_match:
+            api_config['swKey'] = sw_key_match.group(2)
+            print(f"✓ swKey: {api_config['swKey']}")
+        
+        # userAgent
+        ua_match = re.search(r'"user-agent"\s*to\s*"([^"]+)"', content)
+        if ua_match:
+            api_config['userAgent'] = ua_match.group(1)
+            print(f"✓ userAgent: {api_config['userAgent']}")
+        
+        # referer
+        referer_match = re.search(r'"Referer"\s*to\s*"([^"]+)"', content)
+        if referer_match:
+            api_config['referer'] = referer_match.group(1)
+            print(f"✓ referer: {api_config['referer']}")
         
         # Configleri kaydet
-        with open('firebase-config.json', 'w') as f:
+        with open('scripts/firebase-config.json', 'w') as f:
             json.dump(firebase_config, f, indent=2)
         
-        with open('api-config.json', 'w') as f:
+        with open('scripts/api-config.json', 'w') as f:
             json.dump(api_config, f, indent=2)
             
         print("✓ Config dosyaları oluşturuldu")
@@ -69,9 +74,9 @@ def download_rec_tv_kt():
             'userAgent': 'Dart/3.7 (dart:io)',
             'referer': 'https://twitter.com/'
         }
-        with open('api-config.json', 'w') as f:
+        with open('scripts/api-config.json', 'w') as f:
             json.dump(fallback_config, f, indent=2)
         print("✓ Fallback config oluşturuldu")
 
 if __name__ == "__main__":
-    download_rec_tv_kt()
+    parse_local_rec_tv()
