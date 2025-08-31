@@ -1,0 +1,55 @@
+name: Generate M3U Playlist
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */12 * * *'
+
+jobs:
+  generate-m3u:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+
+    - name: Install Python dependencies
+      run: |
+        pip install requests firebase-admin
+
+    - name: Download and parse RecTV.kt
+      run: |
+        cd scripts
+        python parse-rec-tv.py
+
+    - name: Get Firebase config dynamically
+      run: |
+        cd scripts
+        python firebase-auth.py
+
+    - name: Get API config from Firebase
+      run: |
+        cd scripts
+        python get-api-config.py
+
+    - name: Generate M3U playlist
+      run: |
+        cd scripts
+        php generate-m3u.php
+
+    - name: Commit and push M3U
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add m3u-output/rectv-playlist.m3u
+        git commit -m "Auto-update M3U $(date +'%Y-%m-%d %H:%M')" || echo "No changes"
+        git push
