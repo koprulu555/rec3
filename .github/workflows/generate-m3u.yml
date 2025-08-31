@@ -15,8 +15,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        node-version: '18'
-        cache: 'npm'
+        python-version: '3.10'
 
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
@@ -29,37 +28,25 @@ jobs:
 
     - name: Parse RecTV.kta from YOUR repository
       run: |
-        echo "Kendi reponuzdaki RecTV.kta dosyası analiz ediliyor..."
+        echo "Local RecTV.kta analiz ediliyor..."
         cd scripts
         python parse-rec-tv.py
-        echo "Analiz tamamlandı"
 
-    - name: Get Firebase config dynamically
+    - name: Get Firebase Remote Config
       run: |
+        echo "Firebase Remote Config alınıyor..."
         cd scripts
-        echo "Firebase config alınıyor..."
-        python firebase-auth.py
-        echo "Firebase config tamamlandı"
-
-    - name: Get API config from Firebase
-      run: |
-        cd scripts
-        echo "API config alınıyor..."
-        python get-api-config.py
-        echo "API config tamamlandı"
+        python firebase-remote-config.py
 
     - name: Generate M3U playlist
       run: |
         echo "M3U playlist oluşturuluyor..."
         php scripts/generate-m3u.php
-        echo "M3U oluşturma tamamlandı"
 
     - name: Commit and push M3U
       run: |
-        echo "M3U dosyası commit ediliyor..."
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add rectv-playlist.m3u
-        git commit -m "Auto-update M3U $(date +'%Y-%m-%d %H:%M')" || echo "No changes to commit"
+        git commit -m "Auto-update M3U $(date +'%Y-%m-%d %H:%M')" || echo "No changes"
         git push
-        echo "Commit tamamlandı"
